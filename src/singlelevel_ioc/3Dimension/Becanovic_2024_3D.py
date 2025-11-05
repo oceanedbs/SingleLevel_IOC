@@ -43,9 +43,6 @@ dq = np.diff(q, axis=1) / dt
 ddq = np.diff(dq, axis=1) / dt 
 
 opti, var = make_ndof_model(n, N, dh_param) 
-print(opti)
-stop()
-print(var)
 
 
 # Instanciate 
