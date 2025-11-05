@@ -114,6 +114,13 @@ def snapshot_from_vars(var, ii, ax=None, marker_size=6, line_width=2):
     return np.column_stack((Px, Py, Pz)), None, None, np.column_stack((Pcomx, Pcomy, Pcomz))
 
 
+def padded_lims(vmin, vmax, pad_frac=0.05):
+            rng = vmax - vmin
+            if rng == 0:
+                pad = max(1e-3, abs(vmin) * pad_frac)
+            else:
+                pad = rng * pad_frac
+            return (vmin - pad, vmax + pad)
 
 def plot_joint_traj_from_vars(num_vars, *args, **kwargs):
     """

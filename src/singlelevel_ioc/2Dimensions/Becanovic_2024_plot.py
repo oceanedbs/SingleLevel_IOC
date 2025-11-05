@@ -164,7 +164,6 @@ def snapshot_from_vars(num_vars, ii, marker_size=15, line_width=2):
     Px = P[0::3, ii]
     Py = P[1::3, ii]
     Ptheta = P[2:3, ii]
-    print(P.shape, Px, Py, Ptheta)
 
     L = np.append(num_vars["parameters"]["L"], num_vars["parameters"]["L"][-1])
     # Direction vectors
@@ -193,7 +192,6 @@ def snapshot_from_vars(num_vars, ii, marker_size=15, line_width=2):
              markersize=marker_size, linewidth=line_width)
 
     # Quiver vectors
-    print(Px, Py, Ux, Uy, Vx, Vy)
     plt.quiver(Px, Py, Ux, Vx, scale=10, color=[1, 0, 0], width=0.005, linewidth=line_width, alpha=0.2)
     plt.quiver(Px, Py, Uy, Vy, scale=10, color=[0, 1, 0], width=0.005, linewidth=line_width, alpha=0.2)
 

@@ -22,6 +22,8 @@ def make_ndof_model(n, N):
     params['gravity'] = opti.parameter(2)
     params['goal'] = opti.parameter(2, 1)
 
+    print(params)
+
     params['Fext'] = []
     for ii in range(n):
         params['Fext'].append(opti.parameter(3, N - 2))
@@ -93,7 +95,7 @@ def make_ndof_model(n, N):
     constraints['dynamics_pos'] = variables['q'][:, 1:] - variables['q'][:, :-1] - variables['dq'] * params['dt']
     constraints['dynamics_vel'] = variables['dq'][:, 1:] - variables['dq'][:, :-1] - variables['ddq'] * params['dt']
     constraints['goal_ee'] = functions['P'][-1][0:2, -1] - params['goal']
-
+    
     var['constraints'] = constraints
 
     # -------------------------------
@@ -110,12 +112,12 @@ def make_ndof_model(n, N):
     costs['ee_vel_cost'] = ca.sumsqr(Vee) / N / 2e1
     costs['joint_torque_change_cost'] = ca.sumsqr(tau[:, 1:] - tau[:, :-1]) / (params['dt'] ** 2) / N / n / 6e5
     costs['joint_jerk_cost'] = ca.sumsqr(ddq[:, 1:] - ddq[:, :-1]) / (params['dt'] ** 2) / N / n / 2e6
-    costs['torque change_cost'] = ca.sumsqr(tau[:, 2:] - 2 * tau[:, 1:-1] + tau[:, :-2]) / (params['dt'] ** 4) / N / n / 1e7
-    costs['acceleration_cost'] = ca.sumsqr(ddq) / N / n / 1e1
-    costs['mechanical_work_cost'] = ca.sumsqr(tau[:, 1:] * dq[:, :]) / N / (n - 1) / 1e2
-    costs['duration_cost'] = params['dt'] * N / 1e1
-    costs['accuracy_cost'] = ca.sumsqr(constraints['goal_ee']) * 1e3
-    costs['posture_cost'] = ca.sumsqr(variables['q']) / N / n / 1e2
+    # costs['torque change_cost'] = ca.sumsqr(tau[:, 2:] - 2 * tau[:, 1:-1] + tau[:, :-2]) / (params['dt'] ** 4) / N / n / 1e7
+    # costs['acceleration_cost'] = ca.sumsqr(ddq) / N / n / 1e1
+    # costs['mechanical_work_cost'] = ca.sumsqr(tau[:, 1:] * dq[:, :]) / N / (n - 1) / 1e2
+    # costs['duration_cost'] = params['dt'] * N / 1e1
+    # costs['accuracy_cost'] = ca.sumsqr(constraints['goal_ee']) * 1e3
+    # costs['posture_cost'] = ca.sumsqr(variables['q']) / N / n / 1e2
     # How to add coordination cost 
 
 
@@ -229,10 +231,14 @@ def forward_propagation(q, dq, ddq, L, COM, M, I):
         Acom.append(Acom_k)
         A.append(A_next)
         Fcom.append(Fcom_k)
-        
-        print(type(Fcom), type(Fcom[0]), len(Fcom))
-        print(type(Pcom), type(Pcom[0]), len(Pcom))
-        print(type(P), type(P[0]), len(P))
+
+        print('Pcom ', Pcom)
+        print('P ', P)
+        print('Vcom ', Vcom)
+        print('V ', V)
+        print('Acom ', Acom)
+        print('A ', A)
+        print('Fcom ', Fcom)
 
     return Pcom, P, Vcom, V, Acom, A, Fcom
 
@@ -255,7 +261,6 @@ def backward_propagation(Fcom, Fext, Pcom, P, M, gravity):
     """
 
     n = len(Fcom)
-    print(n)
     N = Fcom[-1].shape[1]
 
     # Initialize force containers
@@ -263,7 +268,6 @@ def backward_propagation(Fcom, Fext, Pcom, P, M, gravity):
 
     # Backward recursion
     for ii in range(n - 1, -1, -1):
-        print(ii)
         Ci = Pcom[ii] - P[ii]
         Pi = P[ii + 1] - Pcom[ii]
 
@@ -322,7 +326,8 @@ def instantiate_ndof_model(var, opti, dt, q0, dq0, L, COM, M, I, gravity, Fext, 
     opti.set_initial(v['ddq'], ddq)
     opti.set_initial(v['dq'], dq)
     opti.set_initial(v['q'], q)
-    
+
+
 
 def numerize_var(model_var, opti, initial_flag=False):
     """

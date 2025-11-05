@@ -3,6 +3,7 @@ import numpy as np
 from roboticstoolbox import DHRobot
 from spatialmath import SE3
 
+
 def make_ndof_model(n, N, dh_params):
     if N <= 2:
         raise ValueError("Need N > 2.")
@@ -165,7 +166,7 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
     """
 
     n, N = q.shape
-    g = gravity.reshape((3, 1)) if isinstance(gravity, ca.MX) else ca.MX(gravity).reshape((3, 1))
+    g = ca.MX(gravity).reshape((3,1))
 
     # Initialize outputs
     P = [ca.MX.zeros(3, N) for _ in range(n+1)]
@@ -173,12 +174,17 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
     A = [ca.MX.zeros(3, N) for _ in range(n+1)]
     
     Pcom, Vcom, Acom, Fcom = [], [], [], []
-    
+
+    for i in range(n):
+        Pcom.append(ca.MX.zeros(3, N))
+        Vcom.append(ca.MX.zeros(3, N))
+        Acom.append(ca.MX.zeros(3, N))
+        Fcom.append(ca.MX.zeros(3, N))
 
     for t in range(N):
-        T_prev = ca.MX.eye(4)  # base frame
-        R_prev = T_prev[0:3, 0:3]
-        p_prev = T_prev[0:3, 3]
+        T_prev = ca.MX.eye(4)
+        R_prev = T_prev[:3, :3]
+        p_prev = T_prev[:3, 3]
 
         v_prev = ca.MX.zeros(3)
         a_prev = ca.MX.zeros(3)
@@ -189,21 +195,21 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
             a_i, alpha_i, d_i = dh_params[i]
             theta_i = q[i, t]
 
-            # Transformation i-1 -> i
+            # Compute transform
             T_i = mdh_transform(a_i, alpha_i, d_i, theta_i)
-            R_i = T_prev[0:3, 0:3] @ T_i[0:3, 0:3]
-            p_i = p_prev + T_prev[0:3, 0:3] @ T_i[0:3, 3]
-            z_prev = T_prev[0:3, 2]
+            R_i = R_prev @ T_i[:3, :3]
+            p_i = p_prev + R_prev @ T_i[:3, 3]
+            z_prev = R_prev[:, 2]
 
-            # Angular velocity and acceleration (revolute joint)
+            # Angular velocity & acceleration (revolute)
             omega_i = omega_prev + dq[i, t] * z_prev
             alpha_i = alpha_prev + ddq[i, t] * z_prev + ca.cross(omega_prev, dq[i, t] * z_prev)
 
-            # Linear velocity and acceleration of joint i
+            # Linear velocity & acceleration
             v_i = v_prev + ca.cross(omega_prev, p_i - p_prev)
             a_i_lin = a_prev + ca.cross(alpha_prev, p_i - p_prev) + ca.cross(omega_prev, ca.cross(omega_prev, p_i - p_prev))
 
-            # --- Compute COM quantities ---
+            # --- COM quantities ---
             r_com_i = R_i @ COM[:, i]
             p_com_i = p_i + r_com_i
             v_com_i = v_i + ca.cross(omega_i, r_com_i)
@@ -216,18 +222,13 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
             P[i+1][:, t] = p_i
             V[i+1][:, t] = v_i
             A[i+1][:, t] = a_i_lin
-            if len(Pcom) < n:  # initialize once
-                Pcom.append(ca.MX.zeros(3, N))
-                Vcom.append(ca.MX.zeros(3, N))
-                Acom.append(ca.MX.zeros(3, N))
-                Fcom.append(ca.MX.zeros(3, N))
 
             Pcom[i][:, t] = p_com_i
             Vcom[i][:, t] = v_com_i
             Acom[i][:, t] = a_com_i
             Fcom[i][:, t] = Fcom_i
 
-            # Prepare for next iteration
+            # Update for next link
             T_prev = T_prev @ T_i
             R_prev = R_i
             p_prev = p_i
@@ -235,15 +236,8 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
             a_prev = a_i_lin
             omega_prev = omega_i
             alpha_prev = alpha_i
-            
-    print(type(Fcom), type(Fcom[0]), len(Fcom))
-    print(type(Pcom), type(Pcom[0]), len(Pcom))
-    print(type(P), type(P[0]), len(P))
-
 
     return P, V, A, Pcom, Vcom, Acom, Fcom
-
-
 
 
 def backward_propagation(Fcom, Fext, Pcom, P, M, gravity, dh_params):
@@ -267,34 +261,27 @@ def backward_propagation(Fcom, Fext, Pcom, P, M, gravity, dh_params):
     """
 
     n = len(Fcom)
-    Nsamples = Fcom[0].shape[1]
+    _, Nsteps = Fcom[0].shape
+    g = ca.MX(gravity).reshape((3,1))
 
-    # Initialize force and moment containers
-    F = [ca.MX.zeros(3, Nsamples) for _ in range(n + 1)]
-    Nmom = [ca.MX.zeros(3, Nsamples) for _ in range(n + 1)]
+    # Initialize forces
+    F = [ca.MX.zeros(3, Nsteps) for _ in range(n)]
 
-    # Backward recursion (from end-effector to base)
-    for i in range(n - 1, -1, -1):
-        # Position vectors
-        r_c = Pcom[i] - P[i]       # from joint i to COM_i
-        r_p = P[i + 1] - Pcom[i]   # from COM_i to next joint
+    for t in range(Nsteps):
+        f_next = ca.MX.zeros(3)
 
-        # Compute total force on joint i
-        F[i] = (
-            Fcom[i]                       # inertial force from acceleration
-            + F[i + 1]                    # transmitted force from next link
-            - M[i] * gravity.reshape((3, 1))  # gravitational force
-            - Fext[i]                     # external forces acting on this link
-        )
+        for i in reversed(range(n)):
+            # Inertial force + gravity + external + propagated from child
+            Fi = Fcom[i][:, t] + M[i]*g + Fext[i][:, t] + f_next
 
-        # Compute total moment (torque) at joint i
-        Nmom[i] = (
-            Nmom[i + 1]                          # propagated moment from next joint
-            + ca.cross(r_c, Fcom[i])             # moment due to COM offset
-            + ca.cross(r_p, F[i + 1])            # moment from distal link
-        )
+            # Store total force at this joint
+            F[i][:, t] = Fi
+
+            # Update propagated force for next iteration
+            f_next = Fi
 
     return F
+
 
 def instantiate_ndof_model(var, opti, dt, q0, dq0, L, COM, M, I, gravity, Fext, goal, ddq, dq, q):
     """
@@ -315,6 +302,7 @@ def instantiate_ndof_model(var, opti, dt, q0, dq0, L, COM, M, I, gravity, Fext, 
     """
 
     n = q0.shape[0]
+    print(n)
 
     # -------------------------------
     # Parameters
@@ -341,7 +329,7 @@ def instantiate_ndof_model(var, opti, dt, q0, dq0, L, COM, M, I, gravity, Fext, 
     opti.set_initial(v['ddq'], ddq)
     opti.set_initial(v['dq'], dq)
     opti.set_initial(v['q'], q)
-    
+
 
 def numerize_var(model_var, opti, initial_flag=False):
     """

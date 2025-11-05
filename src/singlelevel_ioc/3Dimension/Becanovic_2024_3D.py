@@ -34,8 +34,17 @@ A = Arm(L, M, I, COM, alpha, offset, n)
 arm = A.create_DH_model()
 dh_param = A.get_dh_params()
 print(arm)
+
+goal = arm.fkine(np.array([1.99, -2.41, 0]))
+
+# extract last column (position) from homogeneous transform returned by fkine
+gmat = goal.A if hasattr(goal, "A") else np.array(goal)
+goal = gmat[:3, 3].reshape(3, 1)
+print(goal)
+
 #arm.plot(np.array([0,0,0]), block=True)
-#arm.plot(np.array([np.pi/2,np.pi/4, 0]), block=True)
+# arm.plot(np.array([np.pi/2,np.pi/4, 0]), block=True)
+
 
 # Initial guess
 q = np.array((np.linspace(1.5708, 2.0399, N), np.linspace(0, -2.2524, N)))  # initial guess
@@ -48,18 +57,18 @@ opti, var = make_ndof_model(n, N, dh_param)
 # Instanciate 
 instantiate_ndof_model(var, opti, dt, q0, dq0, L, COM, M, I, gravity, Fext, goal, ddq, dq, q);
 
-opti.solver('ipopt')#, {
-#     'ipopt.print_level': 5,
-#     'ipopt.max_iter': 500,
-#     'ipopt.tol': 1e-6,
-#     'ipopt.acceptable_tol': 1e-5,
-#     'ipopt.acceptable_constr_viol_tol': 1e-3,
-#     'ipopt.constr_viol_tol': 1e-4,
-#     'ipopt.acceptable_obj_change_tol': 1e-4
-# })
+opti.solver('ipopt'), {
+    'ipopt.print_level': 5,
+    'ipopt.max_iter': 500,
+    'ipopt.tol': 1e-6,
+    'ipopt.acceptable_tol': 1e-5,
+    'ipopt.acceptable_constr_viol_tol': 1e-3,
+    'ipopt.constr_viol_tol': 1e-4,
+    'ipopt.acceptable_obj_change_tol': 1e-4
+}
 
 
-# Optimize joint velocity
+# # Optimize joint velocity
 theta_1 = np.array([1, 5000, 1])  # weights for cost function 1
 theta_1 = theta_1 / np.linalg.norm(theta_1)
 
@@ -71,9 +80,18 @@ try:
     sol_1 = opti.solve()
 except Exception as e:
     print("Solver failed:", e)
-    sol_1 = opti.debug
-    print(sol_1.value(var['constraints']['goal_ee']))
-    
+
+    constr_values = opti.debug.value(opti.g)  # returns a numpy array
+    print("Constraint values:", constr_values)
+    print("Max constraint violation:", np.max(np.abs(constr_values)))
+
+    constr_values = opti.debug.value(opti.g)
+    violated = np.where(np.abs(constr_values) > 1e-3)[0]  # threshold can be adjusted
+    for idx in violated:
+        print(f"Constraint {idx} violated by {constr_values[idx]}")
+
+
+
 lambda_1 = sol_1.value(opti.lam_g) # Extract dual variables
 
 # Extract primal variables
