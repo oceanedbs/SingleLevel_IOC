@@ -93,11 +93,11 @@ def snapshot_from_vars(var, ii, ax=None, marker_size=6, line_width=2):
     Pcomz = Pcom[2::3, ii]
 
     # Optional total COM
-    has_Pcomtotal = "Pcomtotal" in var["functions"]
-    if has_Pcomtotal:
-        Pcomtotalx = var["functions"]["Pcomtotal"][0, ii]
-        Pcomtotaly = var["functions"]["Pcomtotal"][1, ii]
-        Pcomtotalz = var["functions"]["Pcomtotal"][2, ii]
+    # has_Pcomtotal = "Pcomtotal" in var["functions"]
+    # if has_Pcomtotal:
+    #     Pcomtotalx = var["functions"]["Pcomtotal"][0, ii]
+    #     Pcomtotaly = var["functions"]["Pcomtotal"][1, ii]
+    #     Pcomtotalz = var["functions"]["Pcomtotal"][2, ii]
 
     # -----------------------------
     # Plot robot skeleton
@@ -110,9 +110,9 @@ def snapshot_from_vars(var, ii, ax=None, marker_size=6, line_width=2):
     # -----------------------------
     ax.scatter(Pcomx, Pcomy, Pcomz, color='c', s=50)
 
-    if has_Pcomtotal:
-        ax.scatter(Pcomtotalx, Pcomtotaly, Pcomtotalz, color=[0.2, 0.7, 0.05],
-                   marker='s', s=70, label='Total COM')
+    # if has_Pcomtotal:
+    #     ax.scatter(Pcomtotalx, Pcomtotaly, Pcomtotalz, color=[0.2, 0.7, 0.05],
+    #                marker='s', s=70, label='Total COM')
 
     return np.column_stack((Px, Py, Pz)), None, None, np.column_stack((Pcomx, Pcomy, Pcomz))
 
@@ -224,32 +224,32 @@ def plot_segment_vels_from_vars(vars, *args, **kwargs):
         # ----------------------
         # x-velocity
         # ----------------------
-        plt.subplot(3, n, ii+1)
-        plt.plot(t, vars["functions"]["V"][ii+1][0, :], *args, **kwargs)
-        plt.plot(t[:NnumV], Vnum[0, :], '--', *args, **kwargs)
-        plt.ylabel(f"$V^{{{ii+1}}}_x$")
-        plt.legend()
-        plt.grid(True)
+        # plt.subplot(3, n, ii+1)
+        # plt.plot(t, vars["functions"]["V"][ii+1][0, :], *args, **kwargs)
+        # plt.plot(t[:NnumV], Vnum[0, :], '--', *args, **kwargs)
+        # plt.ylabel(f"$V^{{{ii+1}}}_x$")
+        # plt.legend()
+        # plt.grid(True)
 
-        # ----------------------
-        # y-velocity
-        # ----------------------
-        plt.subplot(3, n, n + ii+1)
-        plt.plot(t, vars["functions"]["V"][ii+1][1, :], *args, **kwargs)
-        plt.plot(t[:NnumV], Vnum[1, :], '--', *args, **kwargs)
-        plt.ylabel(f"$V^{{{ii+1}}}_y$")
-        plt.legend()
-        plt.grid(True)
+        # # ----------------------
+        # # y-velocity
+        # # ----------------------
+        # plt.subplot(3, n, n + ii+1)
+        # plt.plot(t, vars["functions"]["V"][ii+1][1, :], *args, **kwargs)
+        # plt.plot(t[:NnumV], Vnum[1, :], '--', *args, **kwargs)
+        # plt.ylabel(f"$V^{{{ii+1}}}_y$")
+        # plt.legend()
+        # plt.grid(True)
 
         # ----------------------
         # theta-velocity
         # ----------------------
-        plt.subplot(3, n, 2*n + ii+1)
-        plt.plot(t, vars["functions"]["V"][ii+1][2, :], *args, **kwargs)
-        plt.plot(t[:NnumV], Vnum[2, :], '--', *args, **kwargs)
-        plt.ylabel(f"$V^{{{ii+1}}}_\\theta$")
-        plt.legend()
-        plt.grid(True)
+        # plt.subplot(3, n, 2*n + ii+1)
+        # plt.plot(t, vars["functions"]["V"][ii+1][2, :], *args, **kwargs)
+        # plt.plot(t[:NnumV], Vnum[2, :], '--', *args, **kwargs)
+        # plt.ylabel(f"$V^{{{ii+1}}}_\\theta$")
+        # plt.legend()
+        # plt.grid(True)
 
         # xlabel for bottom row
         plt.xlabel("$t$ [s]")

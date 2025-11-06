@@ -25,15 +25,17 @@ I = np.array([1/12, 1/12])  # segment inertias
 alpha = np.zeros(n)
 offset=np.zeros(n)
 
-gravity = np.array([0, 0, -9.81])  # gravity vector
+gravity = np.array([ -9.81,0, 0])  # gravity vector
 Fext = [np.zeros((3, N - 2)) for _ in range(n)]
 
 goal = np.array([[0.5], [0.5], [0]])
 
 A = Arm(L, M, I, COM, alpha, offset, n)
 arm = A.create_DH_model()
+
 dh_param = A.get_dh_params()
 print(arm)
+
 
 goal = arm.fkine(np.array([1.99, -2.41, 0]))
 
@@ -74,7 +76,7 @@ theta_1 = theta_1 / np.linalg.norm(theta_1)
 
 
 
-opti.minimize(theta_1[0]* var['costs']['joint_vel_cost'] + theta_1[1]* var['costs']['joint_torque_cost'] + theta_1[2]* var['costs']['ee_vel_cost'])
+opti.minimize(theta_1[0]* var['costs']['joint_vel_cost'] + theta_1[1]* var['costs']['joint_torque_cost']) #+ theta_1[2]* var['costs']['ee_vel_cost'])
 
 try:
     sol_1 = opti.solve()
@@ -119,7 +121,7 @@ vars_ioc["variables"]["theta"] = opti_ioc.variable(nparam)
 
 
 # Prepare stationarity constraint
-vars_ioc["costs"]["compound_cost"] = vars_ioc["variables"]["theta"][0] * vars_ioc["costs"]["joint_vel_cost"] + vars_ioc["variables"]["theta"][1] * vars_ioc["costs"]["joint_torque_cost"] + vars_ioc["variables"]["theta"][2] * vars_ioc["costs"]["ee_vel_cost"]
+vars_ioc["costs"]["compound_cost"] = vars_ioc["variables"]["theta"][0] * vars_ioc["costs"]["joint_vel_cost"] + vars_ioc["variables"]["theta"][1] * vars_ioc["costs"]["joint_torque_cost"]  #+ vars_ioc["variables"]["theta"][2] * vars_ioc["costs"]["ee_vel_cost"]
 q_vec = ca.vec(vars_ioc["variables"]["q"])
 dq_vec = ca.vec(vars_ioc["variables"]["dq"])
 ddq_vec = ca.vec(vars_ioc["variables"]["ddq"])
@@ -268,9 +270,9 @@ plt.title("Joint Trajectories")
 # -----------------------------
 # Segment velocities
 # -----------------------------
-plt.figure(figsize=(12, 8))
-plot_segment_vels_from_vars(num_vars_1)
-plot_segment_vels_from_vars(num_vars_ioc)
-plt.title("Segment Velocities")
+# plt.figure(figsize=(12, 8))
+# plot_segment_vels_from_vars(num_vars_1)
+# plot_segment_vels_from_vars(num_vars_ioc)
+# plt.title("Segment Velocities")
 
 plt.show()

@@ -59,10 +59,14 @@ def make_ndof_model(n, N, dh_params):
      
     # Call your custom dynamics
     (functions['P'], 
-     functions['V'], 
-    functions['A'], 
-    functions['Pcom'],functions['Vcom'], 
-    functions['Acom'],functions['Fcom']) = forward_propagation( 
+    # functions['V'], 
+    #functions['A'], 
+    functions['Pcom'],
+    # functions['Vcom'], 
+    #functions['Acom'],
+    functions['Fcom'], 
+    functions['Ncom'], 
+    T) = forward_propagation( 
          functions['q'],
          functions['dq'],
          functions['ddq'],
@@ -70,26 +74,23 @@ def make_ndof_model(n, N, dh_params):
          params['M'], 
          params['COM'], 
          params['I'], 
-         params['gravity']
      )
 
 
-    functions['F'] = backward_propagation(
+    functions['F'], functions['N'], functions['model_tau'] = backward_propagation(
         functions['Fcom'],
+        functions['Ncom'],
         functions['Fext'],
-        functions['Pcom'],
-        functions['P'],
         params['M'],
         params['gravity'],
-        dh_params
+        T
     )
-
     # -------------------------------
     # Compute model torques
     # -------------------------------
-    functions['model_tau'] = ca.MX.zeros(n, N)
-    for ii in range(n):
-        functions['model_tau'][ii, :] = functions['F'][ii][2, :]
+    # functions['model_tau'] = ca.MX.zeros(n, N)
+    # for ii in range(n):
+    #     functions['model_tau'][ii, :] = functions['F'][ii][2, :]
 
     var['functions'] = functions
 
@@ -112,11 +113,11 @@ def make_ndof_model(n, N, dh_params):
     tau = functions['model_tau']
     dq = variables['dq']
     ddq = variables['ddq']
-    Vee = functions['V'][-1]
+    #Vee = functions['V'][-1]
 
     costs['joint_torque_cost'] = ca.sumsqr(tau) / N / n / 8e1
     costs['joint_vel_cost'] = ca.sumsqr(dq) / N / n / 3e0
-    costs['ee_vel_cost'] = ca.sumsqr(Vee) / N / 2e1
+    #costs['ee_vel_cost'] = ca.sumsqr(Vee) / N / 2e1
     costs['joint_torque_change_cost'] = ca.sumsqr(tau[:, 1:] - tau[:, :-1]) / (params['dt'] ** 2) / N / n / 6e5
     costs['joint_jerk_cost'] = ca.sumsqr(ddq[:, 1:] - ddq[:, :-1]) / (params['dt'] ** 2) / N / n / 2e6
 
@@ -147,7 +148,7 @@ def mdh_transform(a, alpha, d, theta):
     )
 
 
-def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
+def forward_propagation(q, dq, ddq, dh_params, M, COM, I):
     """
     Compute positions, velocities, accelerations of joints in 3D
     using symbolic DH parameters (CasADi MX).
@@ -166,82 +167,73 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
     """
 
     n, N = q.shape
-    g = ca.MX(gravity).reshape((3,1))
+
+    print(dh_params)
 
     # Initialize outputs
     P = [ca.MX.zeros(3, N) for _ in range(n+1)]
-    V = [ca.MX.zeros(3, N) for _ in range(n+1)]
-    A = [ca.MX.zeros(3, N) for _ in range(n+1)]
-    
-    Pcom, Vcom, Acom, Fcom = [], [], [], []
+    T = [[ca.MX.eye(4) for _ in range(N)] for _ in range(n+1)]
+
+    Pcom, Fcom, Ncom = [], [], []
+    z0 = ca.MX([0, 0, 1])
 
     for i in range(n):
         Pcom.append(ca.MX.zeros(3, N))
-        Vcom.append(ca.MX.zeros(3, N))
-        Acom.append(ca.MX.zeros(3, N))
         Fcom.append(ca.MX.zeros(3, N))
+        Ncom.append(ca.MX.zeros(3, N))
 
     for t in range(N):
         T_prev = ca.MX.eye(4)
-        R_prev = T_prev[:3, :3]
         p_prev = T_prev[:3, 3]
 
-        v_prev = ca.MX.zeros(3)
         a_prev = ca.MX.zeros(3)
         omega_prev = ca.MX.zeros(3)
-        alpha_prev = ca.MX.zeros(3)
+        domega_i_prev = ca.MX.zeros(3)
 
         for i in range(n):
-            a_i, alpha_i, d_i = dh_params[i]
+            l_i, alpha_i, d_i = dh_params[i]
             theta_i = q[i, t]
 
             # Compute transform
-            T_i = mdh_transform(a_i, alpha_i, d_i, theta_i)
-            R_i = R_prev @ T_i[:3, :3]
-            p_i = p_prev + R_prev @ T_i[:3, 3]
-            z_prev = R_prev[:, 2]
+            T_i_joint = mdh_transform(l_i, alpha_i, d_i, theta_i)
+            T_i = T_prev @ T_i_joint
+            R_i = T_i[:3, :3]
+            p_i = T_i[:3, 3]
 
             # Angular velocity & acceleration (revolute)
-            omega_i = omega_prev + dq[i, t] * z_prev
-            alpha_i = alpha_prev + ddq[i, t] * z_prev + ca.cross(omega_prev, dq[i, t] * z_prev)
+            omega_i = R_i.T @ domega_i_prev + z0 * dq[i, t]
+            domega_i = R_i.T @ domega_i_prev + z0 * ddq[i, t] + ca.cross(R_i.T @ omega_prev, z0 * dq[i, t])
 
-            # Linear velocity & acceleration
-            v_i = v_prev + ca.cross(omega_prev, p_i - p_prev)
-            a_i_lin = a_prev + ca.cross(alpha_prev, p_i - p_prev) + ca.cross(omega_prev, ca.cross(omega_prev, p_i - p_prev))
+            # Linear acceleration
+            plocal = p_i - p_prev
+            p_com_i = p_prev + R_i @ COM[:, i]
+            a_i = a_prev + R_i.T @ ca.cross(domega_i_prev, plocal) + ca.cross(omega_prev, ca.cross(omega_prev, plocal))
 
-            # --- COM quantities ---
-            r_com_i = R_i @ COM[:, i]
-            p_com_i = p_i + r_com_i
-            v_com_i = v_i + ca.cross(omega_i, r_com_i)
-            a_com_i = a_i_lin + ca.cross(alpha_i, r_com_i) + ca.cross(omega_i, ca.cross(omega_i, r_com_i))
-
+            # --- COM acceleration ---
+            a_com_i = a_i + ca.cross(domega_i, COM[:, i]) + ca.cross(omega_i, ca.cross(omega_i, COM[:, i]))
+           
             # Force at COM
-            Fcom_i = M[i] * (a_com_i - g)
+            Fcom[i][:, t] = M[i] * a_com_i
+
+            # Moment at COM
+            Ncom[i][:, t] = I[i] @ domega_i + ca.cross(omega_i, I[i] @ omega_i)
 
             # Store results
             P[i+1][:, t] = p_i
-            V[i+1][:, t] = v_i
-            A[i+1][:, t] = a_i_lin
-
             Pcom[i][:, t] = p_com_i
-            Vcom[i][:, t] = v_com_i
-            Acom[i][:, t] = a_com_i
-            Fcom[i][:, t] = Fcom_i
+            T[i+1][t] = T_i
 
             # Update for next link
-            T_prev = T_prev @ T_i
-            R_prev = R_i
+            T_prev = T_i
             p_prev = p_i
-            v_prev = v_i
-            a_prev = a_i_lin
+            a_prev = a_i
             omega_prev = omega_i
-            alpha_prev = alpha_i
-    print(P)
+            domega_i_prev = domega_i
 
-    return P, V, A, Pcom, Vcom, Acom, Fcom
+    return P, Pcom, Fcom, Ncom, T
 
 
-def backward_propagation(Fcom, Fext, Pcom, P, M, gravity, dh_params):
+def backward_propagation(Fcom, Ncom, Fext, M, gravity, T):
     """
     3D version of backward_propagation using CasADi MX.
 
@@ -264,24 +256,42 @@ def backward_propagation(Fcom, Fext, Pcom, P, M, gravity, dh_params):
     n = len(Fcom)
     _, Nsteps = Fcom[0].shape
     g = ca.MX(gravity).reshape((3,1))
+    z0 = ca.MX([0, 0, 1])
 
     # Initialize forces
     F = [ca.MX.zeros(3, Nsteps) for _ in range(n)]
+    N = [ca.MX.zeros(3, Nsteps) for _ in range(n)]
+    tau = ca.MX.zeros(n, Nsteps)
 
     for t in range(Nsteps):
-        f_next = ca.MX.zeros(3)
+        f_prev = ca.MX.zeros(3)
+        n_prev = ca.MX.zeros(3)
 
         for i in reversed(range(n)):
+            if i == n-1:
+                R_i = ca.MX.eye(3)
+                p = ca.MX.zeros(3)
+            else:
+                T_i = T[i+1][t]
+                T_i_prev = T[i][t]
+                R_i = T_i[:3, :3]
+                p = T_i[:3, 3] - T_i_prev[:3, 3]
+
             # Inertial force + gravity + external + propagated from child
-            Fi = Fcom[i][:, t] + M[i]*g + Fext[i][:, t] + f_next
+            Fm = Fcom[i][:, t] - M[i]*g + Fext[i][:, t]
+            Fi = R_i @ f_prev + Fm
+            Ni = R_i @ n_prev + ca.cross(p, R_i @ f_prev) + ca.cross(p, Fm) + Ncom[i][:, t]
+            taui = Ni.T @ z0
 
             # Store total force at this joint
             F[i][:, t] = Fi
+            N[i][:, t] = Ni
+            tau[i, t] = taui
 
             # Update propagated force for next iteration
-            f_next = Fi
+            f_prev = Fi
 
-    return F
+    return F, N, tau
 
 
 def instantiate_ndof_model(var, opti, dt, q0, dq0, L, COM, M, I, gravity, Fext, goal, ddq, dq, q):
@@ -358,6 +368,7 @@ def numerize_var(model_var, opti, initial_flag=False):
 
         # Loop over computables within each category
         for computable_name, computable_value in category_content.items():
+            print(computable_name, category_name)
             # Case 1: list (cell array in MATLAB)
             if isinstance(computable_value, (list, tuple)):
                 num_var[category_name][computable_name] = []
