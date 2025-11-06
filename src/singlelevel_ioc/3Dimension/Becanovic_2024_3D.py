@@ -25,7 +25,7 @@ I = np.array([1/12, 1/12])  # segment inertias
 alpha = np.zeros(n)
 offset=np.zeros(n)
 
-gravity = np.array([ -9.81,0, 0])  # gravity vector
+gravity = np.array([  -9.81, 0, 0])  # gravity vector
 Fext = [np.zeros((3, N - 2)) for _ in range(n)]
 
 goal = np.array([[0.5], [0.5], [0]])
@@ -34,7 +34,6 @@ A = Arm(L, M, I, COM, alpha, offset, n)
 arm = A.create_DH_model()
 
 dh_param = A.get_dh_params()
-print(arm)
 
 
 goal = arm.fkine(np.array([1.99, -2.41, 0]))
@@ -227,6 +226,14 @@ theta_id = np.array(num_vars_ioc["variables"]["theta"]).flatten()
 print_str = "True theta = [" + ", ".join(["%.4f" % t for t in theta_true]) + "]"
 print_str += "\nId.  theta = [" + ", ".join(["%.4f" % t for t in theta_id]) + "].\n"
 print(print_str)
+
+# qtemp = num_vars_ioc["variables"]["q"][:, -1]
+# q0 = num_vars_ioc["variables"]["q"][:, 0]
+# print(num_vars_ioc["variables"]["q"])
+# print(qtemp)
+# arm.plot(np.array([q0[0], q0[1], 0]), block=True)
+
+# arm.plot(np.array([qtemp[0], qtemp[1], 0]), block=True)
 
 # -----------------------------
 # Snapshots plots

@@ -13,9 +13,6 @@ def plot_snapshots_from_vars(fig, var, nsnapshots=10):
     """
     q = var["variables"]["q"]
     n, N = q.shape  # number of joints, timesteps
-
-    print(var["functions"]["Pcom"])
-
     ax = fig.add_subplot(111, projection='3d')
 
     # -----------------------------
@@ -29,10 +26,12 @@ def plot_snapshots_from_vars(fig, var, nsnapshots=10):
     # Segment COM trajectories
     # -----------------------------
     for ii in range(n):
-        print(ii)
         Pcom = var["functions"]["Pcom"][ii]
         ax.plot(Pcom[0, :], Pcom[1, :], Pcom[2, :],
                 color='c', linewidth=2, alpha=0.2)
+        
+    print('Pcom :', var['functions']['Pcom'])
+    print('P : ', var['functions']['P'])
 
     # -----------------------------
     # Total COM trajectory (if exists)
@@ -104,6 +103,9 @@ def snapshot_from_vars(var, ii, ax=None, marker_size=6, line_width=2):
     # -----------------------------
     ax.plot(Px, Py, Pz, color='k', marker='o', linestyle='-',
             markersize=marker_size, linewidth=line_width)
+    
+    ax.plot(Px[0:2], Py[0:2], Pz[0:2], color='b', marker='o', linestyle='-',
+            markersize=marker_size, linewidth=line_width)  # base link in blue
 
     # -----------------------------
     # Plot COM markers

@@ -65,8 +65,7 @@ def make_ndof_model(n, N, dh_params):
     # functions['Vcom'], 
     #functions['Acom'],
     functions['Fcom'], 
-    functions['Ncom'], 
-    T) = forward_propagation( 
+    functions['Ncom']) = forward_propagation( 
          functions['q'],
          functions['dq'],
          functions['ddq'],
@@ -74,6 +73,7 @@ def make_ndof_model(n, N, dh_params):
          params['M'], 
          params['COM'], 
          params['I'], 
+         params['gravity']
      )
 
 
@@ -83,7 +83,9 @@ def make_ndof_model(n, N, dh_params):
         functions['Fext'],
         params['M'],
         params['gravity'],
-        T
+        functions['q'],
+        dh_params
+        
     )
     # -------------------------------
     # Compute model torques
@@ -148,7 +150,7 @@ def mdh_transform(a, alpha, d, theta):
     )
 
 
-def forward_propagation(q, dq, ddq, dh_params, M, COM, I):
+def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
     """
     Compute positions, velocities, accelerations of joints in 3D
     using symbolic DH parameters (CasADi MX).
@@ -172,7 +174,6 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I):
 
     # Initialize outputs
     P = [ca.MX.zeros(3, N) for _ in range(n+1)]
-    T = [[ca.MX.eye(4) for _ in range(N)] for _ in range(n+1)]
 
     Pcom, Fcom, Ncom = [], [], []
     z0 = ca.MX([0, 0, 1])
@@ -183,10 +184,12 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I):
         Ncom.append(ca.MX.zeros(3, N))
 
     for t in range(N):
-        T_prev = ca.MX.eye(4)
-        p_prev = T_prev[:3, 3]
-
+        R_prev = ca.MX.eye(3)
+        p_prev = ca.MX.zeros(3)
         a_prev = ca.MX.zeros(3)
+        a_prev[0]= gravity[0]
+        a_prev[1]= gravity[1]
+        a_prev[2]= gravity[2]
         omega_prev = ca.MX.zeros(3)
         domega_i_prev = ca.MX.zeros(3)
 
@@ -196,18 +199,15 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I):
 
             # Compute transform
             T_i_joint = mdh_transform(l_i, alpha_i, d_i, theta_i)
-            T_i = T_prev @ T_i_joint
-            R_i = T_i[:3, :3]
-            p_i = T_i[:3, 3]
+            R_local = T_i_joint[:3, :3]
+            p_local = T_i_joint[:3, 3]
 
             # Angular velocity & acceleration (revolute)
-            omega_i = R_i.T @ domega_i_prev + z0 * dq[i, t]
-            domega_i = R_i.T @ domega_i_prev + z0 * ddq[i, t] + ca.cross(R_i.T @ omega_prev, z0 * dq[i, t])
+            omega_i = R_local.T @ domega_i_prev + z0 * dq[i, t]
+            domega_i = R_local.T @ domega_i_prev + z0 * ddq[i, t] + ca.cross(R_local.T @ omega_prev, z0 * dq[i, t])
 
             # Linear acceleration
-            plocal = p_i - p_prev
-            p_com_i = p_prev + R_i @ COM[:, i]
-            a_i = a_prev + R_i.T @ ca.cross(domega_i_prev, plocal) + ca.cross(omega_prev, ca.cross(omega_prev, plocal))
+            a_i = a_prev + R_local.T @ ca.cross(domega_i_prev, p_local) + ca.cross(omega_prev, ca.cross(omega_prev, p_local))
 
             # --- COM acceleration ---
             a_com_i = a_i + ca.cross(domega_i, COM[:, i]) + ca.cross(omega_i, ca.cross(omega_i, COM[:, i]))
@@ -219,21 +219,23 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I):
             Ncom[i][:, t] = I[i] @ domega_i + ca.cross(omega_i, I[i] @ omega_i)
 
             # Store results
+            R_i = R_prev @ R_local
+            p_i = p_prev + R_i @ p_local
+            p_com_i = p_prev + R_i @ COM[:, i]
             P[i+1][:, t] = p_i
             Pcom[i][:, t] = p_com_i
-            T[i+1][t] = T_i
 
             # Update for next link
-            T_prev = T_i
+            R_prev = R_i
             p_prev = p_i
             a_prev = a_i
             omega_prev = omega_i
             domega_i_prev = domega_i
 
-    return P, Pcom, Fcom, Ncom, T
+    return P, Pcom, Fcom, Ncom
 
 
-def backward_propagation(Fcom, Ncom, Fext, M, gravity, T):
+def backward_propagation(Fcom, Ncom, Fext, M, gravity, q, dh_params):
     """
     3D version of backward_propagation using CasADi MX.
 
@@ -269,18 +271,18 @@ def backward_propagation(Fcom, Ncom, Fext, M, gravity, T):
 
         for i in reversed(range(n)):
             if i == n-1:
-                R_i = ca.MX.eye(3)
+                R = ca.MX.eye(3)
                 p = ca.MX.zeros(3)
             else:
-                T_i = T[i+1][t]
-                T_i_prev = T[i][t]
-                R_i = T_i[:3, :3]
-                p = T_i[:3, 3] - T_i_prev[:3, 3]
+                l_i, alpha_i, d_i = dh_params[i+1]
+                theta_i = q[i+1, t]
+                T_joint = mdh_transform(l_i, alpha_i, d_i, theta_i)
+                R = T_joint[:3, :3]
 
             # Inertial force + gravity + external + propagated from child
-            Fm = Fcom[i][:, t] - M[i]*g + Fext[i][:, t]
-            Fi = R_i @ f_prev + Fm
-            Ni = R_i @ n_prev + ca.cross(p, R_i @ f_prev) + ca.cross(p, Fm) + Ncom[i][:, t]
+            Fm = Fcom[i][:, t] + Fext[i][:, t]
+            Fi = R @ f_prev + Fm
+            Ni = R @ n_prev + ca.cross(p, R @ f_prev) + ca.cross(p, Fm) + Ncom[i][:, t]
             taui = Ni.T @ z0
 
             # Store total force at this joint
@@ -368,7 +370,6 @@ def numerize_var(model_var, opti, initial_flag=False):
 
         # Loop over computables within each category
         for computable_name, computable_value in category_content.items():
-            print(computable_name, category_name)
             # Case 1: list (cell array in MATLAB)
             if isinstance(computable_value, (list, tuple)):
                 num_var[category_name][computable_name] = []
