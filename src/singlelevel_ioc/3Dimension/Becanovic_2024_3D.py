@@ -15,7 +15,7 @@ N = 50  # number of time steps
 T = 1.5 # total time
 dt = T/(N-1)  # time step
 
-q0 = np.array([0, 0])  # initial position
+q0 = np.array([np.pi/2, 0])  # initial position
 dq0 = np.zeros(n)  # initial velocity
 
 L = np.array([1, 1])  # segment lengths
