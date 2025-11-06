@@ -59,10 +59,10 @@ def make_ndof_model(n, N, dh_params):
      
     # Call your custom dynamics
     (functions['P'], 
-    # functions['V'], 
+     functions['V'], 
     #functions['A'], 
     functions['Pcom'],
-    # functions['Vcom'], 
+    functions['Vcom'], 
     #functions['Acom'],
     functions['Fcom'], 
     functions['Ncom']) = forward_propagation( 
@@ -87,13 +87,7 @@ def make_ndof_model(n, N, dh_params):
         dh_params
         
     )
-    # -------------------------------
-    # Compute model torques
-    # -------------------------------
-    # functions['model_tau'] = ca.MX.zeros(n, N)
-    # for ii in range(n):
-    #     functions['model_tau'][ii, :] = functions['F'][ii][2, :]
-
+   
     var['functions'] = functions
 
     # -------------------------------
@@ -115,11 +109,11 @@ def make_ndof_model(n, N, dh_params):
     tau = functions['model_tau']
     dq = variables['dq']
     ddq = variables['ddq']
-    #Vee = functions['V'][-1]
+    Vee = functions['V'][-1]
 
     costs['joint_torque_cost'] = ca.sumsqr(tau) / N / n / 8e1
     costs['joint_vel_cost'] = ca.sumsqr(dq) / N / n / 3e0
-    #costs['ee_vel_cost'] = ca.sumsqr(Vee) / N / 2e1
+    costs['ee_vel_cost'] = ca.sumsqr(Vee) / N / 2e1
     costs['joint_torque_change_cost'] = ca.sumsqr(tau[:, 1:] - tau[:, :-1]) / (params['dt'] ** 2) / N / n / 6e5
     costs['joint_jerk_cost'] = ca.sumsqr(ddq[:, 1:] - ddq[:, :-1]) / (params['dt'] ** 2) / N / n / 2e6
 
@@ -161,11 +155,18 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
         ddq : n x N joint accelerations
         dh_params : list of n tuples (a, alpha, d) 
                     (link lengths, twist, offset)
+        M   : list of link masses
+        COM : 3 x n matrix of COM positions in link frame
+        I   : list of inertia matrices
+        gravity : 3 x 1 gravity vector
 
     Outputs:
-        P : list of n CasADi MX (3 x N) joint positions
-        V : list of n CasADi MX (3 x N) joint velocities
-        A : list of n CasADi MX (3 x N) joint accelerations
+        P     : list of n+1 CasADi MX (3 x N) joint positions
+        V     : list of n+1 CasADi MX (3 x N) joint linear velocities
+        Pcom  : list of n CasADi MX (3 x N) COM positions
+        Vcom  : list of n CasADi MX (3 x N) COM velocities
+        Fcom  : list of n CasADi MX (3 x N) forces at COM
+        Ncom  : list of n CasADi MX (3 x N) moments at COM
     """
 
     n, N = q.shape
@@ -174,12 +175,14 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
 
     # Initialize outputs
     P = [ca.MX.zeros(3, N) for _ in range(n+1)]
+    V = [ca.MX.zeros(3, N) for _ in range(n+1)]
 
-    Pcom, Fcom, Ncom = [], [], []
+    Pcom, Vcom, Fcom, Ncom = [], [], [], []
     z0 = ca.MX([0, 0, 1])
 
     for i in range(n):
         Pcom.append(ca.MX.zeros(3, N))
+        Vcom.append(ca.MX.zeros(3, N))
         Fcom.append(ca.MX.zeros(3, N))
         Ncom.append(ca.MX.zeros(3, N))
 
@@ -187,9 +190,7 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
         R_prev = ca.MX.eye(3)
         p_prev = ca.MX.zeros(3)
         a_prev = ca.MX.zeros(3)
-        a_prev[0]= gravity[0]
-        a_prev[1]= gravity[1]
-        a_prev[2]= gravity[2]
+        a_prev = gravity
         omega_prev = ca.MX.zeros(3)
         domega_i_prev = ca.MX.zeros(3)
 
@@ -218,12 +219,21 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
             # Moment at COM
             Ncom[i][:, t] = I[i] @ domega_i + ca.cross(omega_i, I[i] @ omega_i)
 
-            # Store results
+            # Update position
             R_i = R_prev @ R_local
             p_i = p_prev + R_i @ p_local
             p_com_i = p_prev + R_i @ COM[:, i]
+
+            # --- Linear velocity of joint i  and com i ---
+            v_i = R_local.T @ (V[i][:, t-1] if t > 0 else ca.MX.zeros(3)) \
+                  + ca.cross(omega_i, p_local)
+            v_com_i = v_i + ca.cross(omega_i, R_i @ COM[:, i])
+
+            # Store results
             P[i+1][:, t] = p_i
             Pcom[i][:, t] = p_com_i
+            V[i+1][:, t] = v_i
+            Vcom[i][:, t] = v_com_i
 
             # Update for next link
             R_prev = R_i
@@ -232,7 +242,7 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
             omega_prev = omega_i
             domega_i_prev = domega_i
 
-    return P, Pcom, Fcom, Ncom
+    return P, V, Pcom, Vcom, Fcom, Ncom
 
 
 def backward_propagation(Fcom, Ncom, Fext, M, gravity, q, dh_params):

@@ -29,9 +29,6 @@ def plot_snapshots_from_vars(fig, var, nsnapshots=10):
         Pcom = var["functions"]["Pcom"][ii]
         ax.plot(Pcom[0, :], Pcom[1, :], Pcom[2, :],
                 color='c', linewidth=2, alpha=0.2)
-        
-    print('Pcom :', var['functions']['Pcom'])
-    print('P : ', var['functions']['P'])
 
     # -----------------------------
     # Total COM trajectory (if exists)

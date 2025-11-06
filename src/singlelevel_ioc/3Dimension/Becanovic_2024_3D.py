@@ -75,7 +75,7 @@ theta_1 = theta_1 / np.linalg.norm(theta_1)
 
 
 
-opti.minimize(theta_1[0]* var['costs']['joint_vel_cost'] + theta_1[1]* var['costs']['joint_torque_cost']) #+ theta_1[2]* var['costs']['ee_vel_cost'])
+opti.minimize(theta_1[0]* var['costs']['joint_vel_cost'] + theta_1[1]* var['costs']['joint_torque_cost']+ theta_1[2]* var['costs']['ee_vel_cost'])
 
 try:
     sol_1 = opti.solve()
@@ -120,7 +120,7 @@ vars_ioc["variables"]["theta"] = opti_ioc.variable(nparam)
 
 
 # Prepare stationarity constraint
-vars_ioc["costs"]["compound_cost"] = vars_ioc["variables"]["theta"][0] * vars_ioc["costs"]["joint_vel_cost"] + vars_ioc["variables"]["theta"][1] * vars_ioc["costs"]["joint_torque_cost"]  #+ vars_ioc["variables"]["theta"][2] * vars_ioc["costs"]["ee_vel_cost"]
+vars_ioc["costs"]["compound_cost"] = vars_ioc["variables"]["theta"][0] * vars_ioc["costs"]["joint_vel_cost"] + vars_ioc["variables"]["theta"][1] * vars_ioc["costs"]["joint_torque_cost"] + vars_ioc["variables"]["theta"][2] * vars_ioc["costs"]["ee_vel_cost"]
 q_vec = ca.vec(vars_ioc["variables"]["q"])
 dq_vec = ca.vec(vars_ioc["variables"]["dq"])
 ddq_vec = ca.vec(vars_ioc["variables"]["ddq"])
