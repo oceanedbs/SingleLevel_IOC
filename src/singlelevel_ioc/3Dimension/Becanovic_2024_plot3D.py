@@ -214,11 +214,13 @@ def plot_segment_vels_from_vars(vars, *args, **kwargs):
     dt = vars["parameters"]["dt"]
     t = np.linspace(0, (N-1)*dt, N)
 
+    print("full V : ", vars["functions"]["V"])
+
     for ii in range(n):
         print(ii)
         # Compute numerical velocities
         P_next = vars["functions"]["P"][ii+1]
-        print(P_next)
+        print("V : ", vars["functions"]["V"][ii+1])
         Vnum = np.diff(P_next, axis=1) / dt
         NnumV = Vnum.shape[1]
 
@@ -248,7 +250,7 @@ def plot_segment_vels_from_vars(vars, *args, **kwargs):
         plt.subplot(3, n, 2*n + ii+1)
         plt.plot(t, vars["functions"]["V"][ii+1][2, :], *args, **kwargs)
         plt.plot(t[:NnumV], Vnum[2, :], '--', label = 'numerically computed')
-        plt.ylabel(f"$V^{{{ii+1}}}_\\theta$")
+        plt.ylabel(f"$V^{{{ii+1}}}_z$")
         plt.legend()
         plt.grid(True)
 

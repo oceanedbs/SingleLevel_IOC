@@ -193,7 +193,7 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
         a_prev = ca.MX.zeros(3)
         a_prev = gravity
         omega_prev = ca.MX.zeros(3)
-        domega_i_prev = ca.MX.zeros(3)
+        domega_prev = ca.MX.zeros(3)
 
         for i in range(n):
             l_i, alpha_i, d_i = dh_params[i]
@@ -202,46 +202,53 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
             # Compute transform
             T_i_joint = mdh_transform(l_i, alpha_i, d_i, theta_i)
             R_local = T_i_joint[:3, :3]
-            p_local = T_i_joint[:3, 3]
+            p_local = T_i_joint[:3, 3] 
+            
+            # Update position
+            R_i = R_prev @ R_local
+            p_i = p_prev + R_i @ p_local
+            p_com_i = p_prev + R_i @ COM[:, i]
 
             # Angular velocity & acceleration (revolute)
-            omega_i = R_local.T @ domega_i_prev + z0 * dq[i, t]
-            domega_i = R_local.T @ domega_i_prev + z0 * ddq[i, t] + ca.cross(R_local.T @ omega_prev, z0 * dq[i, t])
+            # omega_i = R_local.T @ omega_prev + z0 * dq[i, t]
+            # domega_i = R_local.T @ domega_i_prev + z0 * ddq[i, t] + ca.cross(R_local.T @ omega_prev, z0 * dq[i, t])
+            axis_world = R_prev @ z0
+            omega_i = omega_prev + axis_world * dq[i, t]
+            domega_i = domega_prev + axis_world * ddq[i, t] + ca.cross(omega_prev, axis_world * dq[i, t])
+            
+             # Update for next link
+            R_prev = R_i
+            p_prev = p_i
+
+            
+           
 
             # Linear acceleration
-            a_i = a_prev + R_local.T @ ca.cross(domega_i_prev, p_local) + ca.cross(omega_prev, ca.cross(omega_prev, p_local))
+            a_i = a_prev + R_local.T @ ca.cross(domega_prev, p_local) + ca.cross(omega_prev, ca.cross(omega_prev, p_local))
+            
+            a_prev = a_i
+            omega_prev = omega_i
+            domega_prev = domega_i 
 
             # --- COM acceleration ---
             a_com_i = a_i + ca.cross(domega_i, COM[:, i]) + ca.cross(omega_i, ca.cross(omega_i, COM[:, i]))
-           
+            
+            # --- Linear velocity of joint i  and com i ---
+            v_i = v_prev + ca.cross(omega_prev, R_prev @ p_local)
+            v_com_i = v_i + ca.cross(omega_i, R_i@ COM[:, i])
+            v_prev = v_i 
+            
             # Force at COM
             Fcom[i][:, t] = M[i] * a_com_i
 
             # Moment at COM
             Ncom[i][:, t] = I[i] @ domega_i + ca.cross(omega_i, I[i] @ omega_i)
 
-            # Update position
-            R_i = R_prev @ R_local
-            p_i = p_prev + R_i @ p_local
-            p_com_i = p_prev + R_i @ COM[:, i]
-
-            # --- Linear velocity of joint i  and com i ---
-            v_i = v_prev + ca.cross(omega_i, R_prev @ p_local)
-            v_com_i = v_i + ca.cross(omega_i, R_i@ COM[:, i])
-
             # Store results
             P[i+1][:, t] = p_i
             Pcom[i][:, t] = p_com_i
             V[i+1][:, t] = v_i
             Vcom[i][:, t] = v_com_i
-
-            # Update for next link
-            R_prev = R_i
-            p_prev = p_i
-            a_prev = a_i
-            v_prev = v_i
-            omega_prev = omega_i
-            domega_i_prev = domega_i
 
     return P, V, Pcom, Vcom, Fcom, Ncom
 

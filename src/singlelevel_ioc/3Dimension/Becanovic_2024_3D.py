@@ -278,7 +278,7 @@ plt.title("Joint Trajectories")
 # -----------------------------
 plt.figure(figsize=(12, 8))
 plot_segment_vels_from_vars(num_vars_1, label='num_vars_1')
-# plot_segment_vels_from_vars(num_vars_ioc, label='num_vars_ioc')
+plot_segment_vels_from_vars(num_vars_ioc, label='num_vars_ioc')
 plt.title("Segment Velocities")
 
 plt.show()
