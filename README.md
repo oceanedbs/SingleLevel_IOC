@@ -81,7 +81,7 @@ Estimated segment velocity along the motion :
 
 ![Segment Velocities](img/seg_vel.png)
 
-*Figure: Segment velocities.*
+*Figure: Joints linear velocities.*
 
 
 
@@ -103,4 +103,4 @@ Estimated segment velocity along the motion :
 
 ![Segment Velocities](img/seg_vel3D.png)
 
-*Figure: Segment velocities.*
+*Figure: Joints linear velocities.*
