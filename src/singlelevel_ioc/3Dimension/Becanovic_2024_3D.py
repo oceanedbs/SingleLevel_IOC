@@ -25,7 +25,7 @@ I = np.array([1/12, 1/12])  # segment inertias
 alpha = np.zeros(n)
 offset=np.zeros(n)
 
-gravity = np.array([  -9.81, 0, 0])  # gravity vector
+gravity = np.array([0, -9.81, 0])  # gravity vector
 Fext = [np.zeros((3, N - 2)) for _ in range(n)]
 
 goal = np.array([[0.5], [0.5], [0]])

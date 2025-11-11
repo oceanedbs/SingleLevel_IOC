@@ -58,14 +58,10 @@ def make_ndof_model(n, N, dh_params):
         )
      
     # Call your custom dynamics
-    (functions['P'], 
-     functions['V'], 
-    #functions['A'], 
-    functions['Pcom'],
-    functions['Vcom'], 
-    #functions['Acom'],
-    functions['Fcom'], 
-    functions['Ncom']) = forward_propagation( 
+    (functions['Pcom'], functions['P'], 
+     functions['Vcom'], functions['V'], 
+     functions['Acom'], functions['A'], 
+     functions['Fcom'], functions['Ncom']) = forward_propagation( 
          functions['q'],
          functions['dq'],
          functions['ddq'],
@@ -176,8 +172,9 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
     # Initialize outputs
     P = [ca.MX.zeros(3, N) for _ in range(n+1)]
     V = [ca.MX.zeros(3, N) for _ in range(n+1)]
+    A = [ca.MX.zeros(3, N) for _ in range(n+1)]
 
-    Pcom, Vcom, Fcom, Ncom = [], [], [], []
+    Pcom, Vcom, Acom, Fcom, Ncom = [], [], [], [], []
     z0 = ca.MX([0, 0, 1])
 
     for i in range(n):
@@ -185,6 +182,7 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
         Vcom.append(ca.MX.zeros(3, N))
         Fcom.append(ca.MX.zeros(3, N))
         Ncom.append(ca.MX.zeros(3, N))
+        Acom.append(ca.MX.zeros(3, N))
 
     for t in range(N):
         R_prev = ca.MX.eye(3)
@@ -210,8 +208,6 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
             p_com_i = p_prev + R_i @ COM[:, i]
 
             # Angular velocity & acceleration (revolute)
-            # omega_i = R_local.T @ omega_prev + z0 * dq[i, t]
-            # domega_i = R_local.T @ domega_i_prev + z0 * ddq[i, t] + ca.cross(R_local.T @ omega_prev, z0 * dq[i, t])
             axis_world = R_prev @ z0
             omega_i = omega_prev + axis_world * dq[i, t]
             domega_i = domega_prev + axis_world * ddq[i, t] + ca.cross(omega_prev, axis_world * dq[i, t])
@@ -219,9 +215,6 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
              # Update for next link
             R_prev = R_i
             p_prev = p_i
-
-            
-           
 
             # Linear acceleration
             a_i = a_prev + R_local.T @ ca.cross(domega_prev, p_local) + ca.cross(omega_prev, ca.cross(omega_prev, p_local))
@@ -238,19 +231,22 @@ def forward_propagation(q, dq, ddq, dh_params, M, COM, I, gravity):
             v_com_i = v_i + ca.cross(omega_i, R_i@ COM[:, i])
             v_prev = v_i 
             
+            # Store results
+            P[i+1][:, t] = p_i
+            Pcom[i][:, t] = p_com_i
+            V[i+1][:, t] = v_i
+            Vcom[i][:, t] = v_com_i
+            A[i+1][:, t] = a_i
+            Acom[i][:, t] = a_com_i
+            
             # Force at COM
             Fcom[i][:, t] = M[i] * a_com_i
 
             # Moment at COM
             Ncom[i][:, t] = I[i] @ domega_i + ca.cross(omega_i, I[i] @ omega_i)
 
-            # Store results
-            P[i+1][:, t] = p_i
-            Pcom[i][:, t] = p_com_i
-            V[i+1][:, t] = v_i
-            Vcom[i][:, t] = v_com_i
 
-    return P, V, Pcom, Vcom, Fcom, Ncom
+    return Pcom, P, Vcom, V, Acom, A, Fcom, Ncom
 
 
 def backward_propagation(Fcom, Ncom, Fext, M, gravity, q, dh_params):
