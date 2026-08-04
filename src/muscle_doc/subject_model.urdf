@@ -1,0 +1,414 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="subject3-scaled_single_leg_4dof">
+  <link name="world_z">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0" />
+      <inertia ixx="0" iyy="0" izz="0" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+  </link>
+  <link name="pelvis">
+    <inertial>
+      <origin xyz="-0.0707 0 0" rpy="0 0 0" />
+      <mass value="10.7863732296" />
+      <inertia ixx="0.0941529394587" iyy="0.0797735508449" izz="0.0530297197924" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.0689579986883 -0.0263934992254 0.0657924974803" rpy="0 0 0" />
+      <geometry>
+        <box size="0.137936 0.214797 0.132751" />
+      </geometry>
+      <material name="pelvis_mat_0">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.0689579986883 -0.0263934992254 0.0657924974803" rpy="0 0 0" />
+      <geometry>
+        <box size="0.137936 0.214797 0.132751" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="-0.0689579986883 -0.0263934992254 -0.0657924974803" rpy="0 0 0" />
+      <geometry>
+        <box size="0.137936 0.214797 0.132751" />
+      </geometry>
+      <material name="pelvis_mat_1">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.0689579986883 -0.0263934992254 -0.0657924974803" rpy="0 0 0" />
+      <geometry>
+        <box size="0.137936 0.214797 0.132751" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="-0.110185500234 -0.00229699909687 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.092623 0.128234 0.094364" />
+      </geometry>
+      <material name="pelvis_mat_2">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.110185500234 -0.00229699909687 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.092623 0.128234 0.094364" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="femur_c">
+    <inertial>
+      <origin xyz="0 -0.17 0" rpy="0 0 0" />
+      <mass value="17.0380185035" />
+      <inertia ixx="0.245273902598" iyy="0.064295100681" izz="0.258645818124" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.00225650146604 -0.204007499851 0.0121235009283" rpy="0 0 0" />
+      <geometry>
+        <box size="0.070317 0.452711 0.099503" />
+      </geometry>
+      <material name="femur_r_mat_0">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.00225650146604 -0.204007499851 0.0121235009283" rpy="0 0 0" />
+      <geometry>
+        <box size="0.070317 0.452711 0.099503" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="tibia_c">
+    <inertial>
+      <origin xyz="0 -0.1867 0" rpy="0 0 0" />
+      <mass value="6.791284495" />
+      <inertia ixx="0.0923211702086" iyy="0.00934202317586" izz="0.0936034086836" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.00114200077951 -0.20595449768 0.00379250012338" rpy="0 0 0" />
+      <geometry>
+        <box size="0.057512 0.376033 0.068869" />
+      </geometry>
+      <material name="tibia_r_mat_0">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.00114200077951 -0.20595449768 0.00379250012338" rpy="0 0 0" />
+      <geometry>
+        <box size="0.057512 0.376033 0.068869" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="-0.0172949990956 -0.225072493777 0.0239014998078" rpy="0 0 0" />
+      <geometry>
+        <box size="0.028716 0.363987 0.031723" />
+      </geometry>
+      <material name="tibia_r_mat_1">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.0172949990956 -0.225072493777 0.0239014998078" rpy="0 0 0" />
+      <geometry>
+        <box size="0.028716 0.363987 0.031723" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="talus_c">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0.183176925017" />
+      <inertia ixx="0.00183176925017" iyy="0.00183176925017" izz="0.00183176925017" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <visual>
+      <origin xyz="0.00553649943322 -0.00116500025615 -0.000365500338376" rpy="0 0 0" />
+      <geometry>
+        <box size="0.046141 0.030118 0.041551" />
+      </geometry>
+      <material name="talus_r_mat_0">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.00553649943322 -0.00116500025615 -0.000365500338376" rpy="0 0 0" />
+      <geometry>
+        <box size="0.046141 0.030118 0.041551" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="calcn_c">
+    <inertial>
+      <origin xyz="0.116747879472 0.0261600981758 1.90402859839e-15" rpy="0 0 0" />
+      <mass value="2.68647278331" />
+      <inertia ixx="0.0029762528342" iyy="0.0118588959503" izz="0.0139192641584" ixy="0.000997043145608" ixz="3.0874987485e-16" iyz="-7.15075274109e-15" />
+    </inertial>
+    <visual>
+      <origin xyz="0.0870084995404 0.0165980001912 0.0031979996711" rpy="0 0 0" />
+      <geometry>
+        <box size="0.249082754803 0.052874 0.395378780548" />
+      </geometry>
+      <material name="calcn_r_mat_0">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.0870084995404 0.0165980001912 0.0031979996711" rpy="0 0 0" />
+      <geometry>
+        <box size="0.249082754803 0.052874 0.395378780548" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="hip_c_intermediate_1">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="1e-09" />
+      <inertia ixx="1e-12" iyy="1e-12" izz="1e-12" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+  </link>
+  <link name="hip_c_intermediate_2">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="1e-09" />
+      <inertia ixx="1e-12" iyy="1e-12" izz="1e-12" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+  </link>
+  <link name="hip_c_intermediate_3">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="1e-09" />
+      <inertia ixx="1e-12" iyy="1e-12" izz="1e-12" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+  </link>
+  <link name="walker_knee_c_intermediate_1">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="1e-09" />
+      <inertia ixx="1e-12" iyy="1e-12" izz="1e-12" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+  </link>
+  <link name="walker_knee_c_intermediate_2">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="1e-09" />
+      <inertia ixx="1e-12" iyy="1e-12" izz="1e-12" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+  </link>
+  <link name="walker_knee_c_intermediate_3">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="1e-09" />
+      <inertia ixx="1e-12" iyy="1e-12" izz="1e-12" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+  </link>
+  <link name="ankle_c_frame">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="1e-09" />
+      <inertia ixx="1e-12" iyy="1e-12" izz="1e-12" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+  </link>
+  <link name="subtalar_c_frame">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="1e-09" />
+      <inertia ixx="1e-12" iyy="1e-12" izz="1e-12" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+  </link>
+  <joint name="hip_c_rotation1" type="revolute">
+    <parent link="hip_c_intermediate_1" />
+    <child link="hip_c_rotation1_reversed_frame" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <axis xyz="-0 -0 -1" />
+    <limit effort="1000" velocity="100" lower="-2.52359878" upper="2.0943951" />
+  </joint>
+  <joint name="hip_c_rotation2" type="revolute">
+    <parent link="hip_c_intermediate_2" />
+    <child link="hip_c_rotation2_reversed_frame" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <axis xyz="-1 -0 -0" />
+    <limit effort="1000" velocity="100" lower="-2.87266463" upper="2.52359878" />
+  </joint>
+  <joint name="hip_c_rotation3" type="fixed">
+    <parent link="hip_c_intermediate_3" />
+    <child link="hip_c_rotation3_reversed_frame" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+  <joint name="hip_c_childfix" type="fixed">
+    <parent link="femur_c" />
+    <child link="hip_c_intermediate_3" />
+    <origin xyz="0.0707 0.0 0.0" rpy="0.0 -0.0 0.0" />
+  </joint>
+  <joint name="walker_knee_c_rotation1" type="fixed">
+    <parent link="walker_knee_c_intermediate_1" />
+    <child link="walker_knee_c_rotation1_reversed_frame" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+  <joint name="walker_knee_c_rotation2" type="fixed">
+    <parent link="walker_knee_c_intermediate_2" />
+    <child link="walker_knee_c_rotation2_reversed_frame" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+  <joint name="walker_knee_c_rotation3" type="fixed">
+    <parent link="walker_knee_c_intermediate_3" />
+    <child link="walker_knee_c_rotation3_reversed_frame" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+  <joint name="walker_knee_c_childfix" type="fixed">
+    <parent link="tibia_c" />
+    <child link="walker_knee_c_intermediate_3" />
+    <origin xyz="0.00021997654227886603 -0.0029502584956155133 -0.0014115209838672293" rpy="-1.6415699999989304 1.4461800000075584 1.5707999999984084" />
+  </joint>
+  <joint name="ankle_c" type="revolute">
+    <parent link="ankle_c_frame" />
+    <child link="ankle_c_reversed_frame" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <axis xyz="-0.105014021009 -0.174021836349 -0.979126373797" />
+    <limit effort="1000" velocity="100" lower="-2.872664625997" upper="2.872664625997" />
+  </joint>
+  <joint name="ankle_c_childfix" type="fixed">
+    <parent link="talus_c" />
+    <child link="ankle_c_frame" />
+    <origin xyz="0.0 0.0 0.0" rpy="0.17589499999974384 -0.10520800000009867 0.018662199999991896" />
+  </joint>
+  <joint name="subtalar_c" type="revolute">
+    <parent link="subtalar_c_frame" />
+    <child link="subtalar_c_reversed_frame" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <axis xyz="-0.151864816053 0.380150188048 -0.912372134698" />
+    <limit effort="1000" velocity="100" lower="-2.610865238198" upper="2.610865238198" />
+  </joint>
+  <joint name="subtalar_c_childfix" type="fixed">
+    <parent link="calcn_c" />
+    <child link="subtalar_c_frame" />
+    <origin xyz="-0.0 -0.0 -0.0" rpy="-1.7681900000011204 0.9062229999987628 1.8196000000040529" />
+  </joint>
+  <link name="subtalar_c_reversed_frame">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0" />
+      <inertia ixx="0" iyy="0" izz="0" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+  </link>
+  <joint name="subtalar_c_reversed_fixed" type="fixed">
+    <parent link="subtalar_c_reversed_frame" />
+    <child link="talus_c" />
+    <origin xyz="0.017668451994726938 -0.01081808265070728 -0.06090246540060998" rpy="-1.870728739261103 1.149041863684822 1.95085983504729" />
+  </joint>
+  <link name="ankle_c_reversed_frame">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0" />
+      <inertia ixx="0" iyy="0" izz="0" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+  </link>
+  <joint name="ankle_c_reversed_fixed" type="fixed">
+    <parent link="ankle_c_reversed_frame" />
+    <child link="tibia_c" />
+    <origin xyz="0.01736614954622813 0.39325491587740047 -0.07175644910526653" rpy="-0.17873155571225444 0.10027816299089205 -0.036940255244816145" />
+  </joint>
+  <link name="walker_knee_c_rotation3_reversed_frame">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0" />
+      <inertia ixx="0" iyy="0" izz="0" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+  </link>
+  <joint name="walker_knee_c_rotation3_reversed_fixed" type="fixed">
+    <parent link="walker_knee_c_rotation3_reversed_frame" />
+    <child link="walker_knee_c_intermediate_2" />
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0" />
+  </joint>
+  <link name="walker_knee_c_rotation2_reversed_frame">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0" />
+      <inertia ixx="0" iyy="0" izz="0" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+  </link>
+  <joint name="walker_knee_c_rotation2_reversed_fixed" type="fixed">
+    <parent link="walker_knee_c_rotation2_reversed_frame" />
+    <child link="walker_knee_c_intermediate_1" />
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0" />
+  </joint>
+  <link name="walker_knee_c_rotation1_reversed_frame">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0" />
+      <inertia ixx="0" iyy="0" izz="0" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+  </link>
+  <joint name="walker_knee_c_rotation1_reversed_fixed" type="fixed">
+    <parent link="walker_knee_c_rotation1_reversed_frame" />
+    <child link="femur_c" />
+    <origin xyz="0.05091083859655728 -0.40508794334644704 -0.033230327544895716" rpy="-1.6954062137447667 1.5000190088673508 1.5708027828027975" />
+  </joint>
+  <link name="hip_c_rotation3_reversed_frame">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0" />
+      <inertia ixx="0" iyy="0" izz="0" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+  </link>
+  <joint name="hip_c_rotation3_reversed_fixed" type="fixed">
+    <parent link="hip_c_rotation3_reversed_frame" />
+    <child link="hip_c_intermediate_2" />
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0" />
+  </joint>
+  <link name="hip_c_rotation2_reversed_frame">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0" />
+      <inertia ixx="0" iyy="0" izz="0" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+  </link>
+  <joint name="hip_c_rotation2_reversed_fixed" type="fixed">
+    <parent link="hip_c_rotation2_reversed_frame" />
+    <child link="hip_c_intermediate_1" />
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0" />
+  </joint>
+  <link name="hip_c_rotation1_reversed_frame">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0" />
+      <inertia ixx="0" iyy="0" izz="0" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+  </link>
+  <joint name="hip_c_rotation1_reversed_fixed" type="fixed">
+    <parent link="hip_c_rotation1_reversed_frame" />
+    <child link="pelvis" />
+    <origin xyz="0.056276 0.07849 0.0" rpy="0.0 -0.0 0.0" />
+  </joint>
+  <joint name="world_z_to_calcn_c" type="fixed">
+    <parent link="world_z" />
+    <child link="calcn_c" />
+    <origin xyz="0 0 0" rpy="1.57079632679 0 -1.57079632679" />
+  </joint>
+  <link name="torso_lower">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0" />
+      <inertia ixx="0" iyy="0" izz="0" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+  </link>
+  <link name="torso_upper">
+    <inertial>
+      <origin xyz="-0.124309813534 0.358750289056 0" rpy="0 0 0" />
+      <mass value="30.2439757727" />
+      <inertia ixx="1.95757456073" iyy="0.886879144643" izz="1.74760241651" ixy="0.0361343916133" ixz="-1.59440246027e-13" iyz="-3.40009010458e-18" />
+    </inertial>
+  </link>
+  <joint name="pelvis_to_torso_lower" type="fixed">
+    <parent link="pelvis" />
+    <child link="torso_lower" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+  <joint name="com_point" type="fixed">
+    <parent link="torso_lower" />
+    <child link="torso_upper" />
+    <origin xyz="0 0 -3.67088980949e-18" rpy="0 0 0" />
+  </joint>
+</robot>

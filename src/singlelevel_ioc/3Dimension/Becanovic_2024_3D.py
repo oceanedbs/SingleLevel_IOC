@@ -163,7 +163,8 @@ q_diff = vars_ioc["variables"]["q"] - q_1
 print(vars_ioc["variables"]["q"].shape)
 print(q_1.shape)
 print(q_1)
-stop()
+
+
 vars_ioc["costs"]["L2_loss"] = ca.sumsqr(q_diff)  # sumsqr does exactly sum(sum(...^2))
 
 # -----------------------------

@@ -39,7 +39,7 @@ opti.solver('ipopt')
 
 
 # # Optimize joint velocity
-theta_1 = np.array([1, 5000,1,0,0,0,0,0,0,0,0])  # weights for cost function 1
+theta_1 = np.array([1, 5000,1,0,0])  # weights for cost function 1
 theta_1 = theta_1 / np.linalg.norm(theta_1)
 
 opti.minimize(theta_1[0]* var['costs']['joint_vel_cost'] + theta_1[1]* var['costs']['joint_torque_cost'] + theta_1[2]* var['costs']['ee_vel_cost']) #+ theta_1[3]* var['costs']['joint_torque_change_cost'] + theta_1[4]* var['costs']['joint_jerk_cost'] + theta_1[5]* var['costs']['torque change_cost'] + theta_1[6]* var['costs']['acceleration_cost'] + theta_1[7]* var['costs']['mechanical_work_cost'] + theta_1[8]* var['costs']['duration_cost'] + theta_1[9]* var['costs']['accuracy_cost'] + theta_1[10]* var['costs']['posture_cost'])
@@ -56,6 +56,77 @@ ddq_1 = sol_1.value(var['variables']['ddq'])
 num_vars_1 = numerize_var(var, sol_1)
 
 print(q_1)
+
+# ============================================================
+# Cost decomposition and scaled cost plotting (DOC)
+# ============================================================
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ---- extract individual cost terms (UNSCALED) ----
+# These names must match exactly the cost terms defined in make_ndof_model()
+
+J_torque      = num_vars_1['costs']['joint_torque_cost']
+J_joint_vel    = num_vars_1['costs']['joint_vel_cost']
+J_ee_vel      = num_vars_1['costs']['ee_vel_cost']
+J_torque_change   = num_vars_1['costs']['joint_torque_change_cost']
+J_joint_jerk = num_vars_1['costs']['joint_jerk_cost']
+# Convert CasADi -> float
+J_torque      = float(J_torque)
+J_joint_vel      = float(J_joint_vel)
+J_ee_vel      = float(J_ee_vel)
+J_torque_change     = float(J_torque_change)
+J_joint_jerk = float(J_joint_jerk)
+
+# ---- HARD-CODED SCALING (same divisors as in DOC definition) ----
+J_torque_s      = J_torque      / 8e1
+J_joint_vel_s      = J_joint_vel      / 3e0
+J_ee_vel_s      = J_ee_vel      / 5e-2
+J_torque_change_s     = J_torque_change     / 2e0
+J_joint_jerk_s = J_joint_jerk / 1e0
+# ---- collect for plotting ----
+cost_names = [
+    r'tau',
+    r'dq',
+    r'ee_vel',
+    r'torque change',
+    r'joint jerk'
+]
+
+scaled_costs = np.array([
+    J_torque_s,
+    J_joint_vel_s,
+    J_ee_vel_s,
+    J_torque_change_s,
+    J_joint_jerk_s
+])
+
+# ---- OPTIONAL: weighted contributions (actual DOC objective terms) ----
+theta = theta_1 
+print(theta)
+
+weighted_costs = theta * scaled_costs
+
+# ============================================================
+# Plot
+# ============================================================
+
+fig, ax = plt.subplots(1, 2, figsize=(10, 4), constrained_layout=True)
+
+ax[0].bar(cost_names, scaled_costs)
+ax[0].set_title('Scaled cost terms')
+ax[0].set_ylabel('Cost value')
+
+ax[1].bar(cost_names, weighted_costs)
+ax[1].set_title('Weighted DOC contributions')
+ax[1].set_ylabel(r'$\theta_i \, J_i$')
+
+for a in ax:
+    a.grid(True, axis='y', alpha=0.3)
+
+plt.show()
+
 
 ## Make IOC
 [opti_ioc, vars_ioc] = make_ndof_model(n, N);

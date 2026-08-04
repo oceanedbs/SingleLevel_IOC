@@ -112,13 +112,7 @@ def make_ndof_model(n, N):
     costs['ee_vel_cost'] = ca.sumsqr(Vee) / N / 2e1
     costs['joint_torque_change_cost'] = ca.sumsqr(tau[:, 1:] - tau[:, :-1]) / (params['dt'] ** 2) / N / n / 6e5
     costs['joint_jerk_cost'] = ca.sumsqr(ddq[:, 1:] - ddq[:, :-1]) / (params['dt'] ** 2) / N / n / 2e6
-    # costs['torque change_cost'] = ca.sumsqr(tau[:, 2:] - 2 * tau[:, 1:-1] + tau[:, :-2]) / (params['dt'] ** 4) / N / n / 1e7
-    # costs['acceleration_cost'] = ca.sumsqr(ddq) / N / n / 1e1
-    # costs['mechanical_work_cost'] = ca.sumsqr(tau[:, 1:] * dq[:, :]) / N / (n - 1) / 1e2
-    # costs['duration_cost'] = params['dt'] * N / 1e1
-    # costs['accuracy_cost'] = ca.sumsqr(constraints['goal_ee']) * 1e3
-    # costs['posture_cost'] = ca.sumsqr(variables['q']) / N / n / 1e2
-    # How to add coordination cost 
+
 
 
     var['costs'] = costs
